@@ -1,0 +1,322 @@
+/* === Outconceive IDE === */
+.ide-layout {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    grid-template-rows: auto 1fr auto;
+    height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Toolbar */
+.ide-toolbar {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 12px;
+    background: #faf8f4;
+    border-bottom: 1px solid #e0dcd6;
+}
+
+.ide-toolbar-section {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.ide-toolbar-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #999;
+    padding: 0 6px;
+    user-select: none;
+}
+
+.ide-btn {
+    width: 30px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    position: relative;
+    transition: background 0.12s, color 0.12s;
+}
+
+.ide-btn:hover { background: #e8e3da; color: #1c1a17; }
+.ide-btn.active { background: #eaf3ee; color: #2d6a4f; }
+
+.ide-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 1.8;
+    fill: none;
+    stroke: currentColor;
+}
+
+.ide-btn-wide {
+    width: auto;
+    padding: 0 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.ide-sep {
+    width: 1px;
+    height: 20px;
+    background: #d8d2c8;
+    margin: 0 4px;
+}
+
+.ide-spacer { flex: 1; }
+
+.ide-btn[data-tip]:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1c1a17;
+    color: #fff;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 100;
+}
+
+/* Canvas */
+.ide-canvas {
+    background: #f0eeea;
+    overflow-y: auto;
+    padding: 32px;
+}
+
+.ide-canvas .mc-app {
+    max-width: 600px;
+    margin: 0 auto;
+    min-height: 200px;
+}
+
+/* Design mode: selectable rows */
+.ide-canvas.design-mode .mc-row {
+    position: relative;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: outline 0.1s;
+    outline: 2px solid transparent;
+}
+
+.ide-canvas.design-mode .mc-row:hover {
+    outline: 2px dashed #b0c4de;
+}
+
+.ide-canvas.design-mode .mc-row.selected {
+    outline: 2px solid #4a90d9;
+    background: rgba(74, 144, 217, 0.05);
+}
+
+.ide-canvas.design-mode .mc-row > * {
+    pointer-events: none;
+}
+
+.ide-canvas.design-mode .mc-row {
+    pointer-events: auto;
+}
+
+/* Insert marker */
+.ide-insert-marker {
+    height: 2px;
+    background: #4a90d9;
+    margin: 2px 0;
+    border-radius: 1px;
+    animation: pulse-marker 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-marker {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+}
+
+/* Side panel */
+.ide-panel {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid #333;
+    overflow: hidden;
+}
+
+.ide-panel-tabs {
+    display: flex;
+    background: #252526;
+    border-bottom: 1px solid #333;
+}
+
+.ide-panel-tab {
+    padding: 8px 16px;
+    font-size: 12px;
+    color: #888;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+
+.ide-panel-tab.active {
+    color: #fff;
+    border-bottom-color: #4a90d9;
+}
+
+.ide-panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+/* Source view */
+.ide-source {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: #d4d4d4;
+}
+
+.ide-source-editor {
+    width: 100%;
+    min-height: 300px;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 12px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    resize: vertical;
+    tab-size: 2;
+    outline: none;
+}
+
+.ide-source-editor:focus {
+    border-color: #4a90d9;
+}
+
+/* Properties panel */
+.ide-props {
+    font-size: 13px;
+}
+
+.ide-props-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #888;
+    margin-bottom: 12px;
+}
+
+.ide-props-empty {
+    color: #666;
+    font-style: italic;
+    padding: 20px 0;
+    text-align: center;
+}
+
+.ide-prop-group {
+    margin-bottom: 12px;
+}
+
+.ide-prop-label {
+    display: block;
+    font-size: 11px;
+    color: #999;
+    margin-bottom: 4px;
+}
+
+.ide-prop-input {
+    width: 100%;
+    padding: 6px 8px;
+    background: #2d2d2d;
+    border: 1px solid #444;
+    border-radius: 3px;
+    color: #d4d4d4;
+    font-size: 13px;
+    font-family: inherit;
+}
+
+.ide-prop-input:focus {
+    border-color: #4a90d9;
+    outline: none;
+}
+
+.ide-prop-select {
+    width: 100%;
+    padding: 6px 8px;
+    background: #2d2d2d;
+    border: 1px solid #444;
+    border-radius: 3px;
+    color: #d4d4d4;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.ide-prop-btn {
+    width: 100%;
+    padding: 8px;
+    background: #4a90d9;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 8px;
+}
+
+.ide-prop-btn:hover { background: #3a7bc8; }
+
+.ide-prop-btn-danger {
+    background: #dc3545;
+}
+
+.ide-prop-btn-danger:hover { background: #c82333; }
+
+/* Status bar */
+.ide-statusbar {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 12px;
+    background: #007acc;
+    color: #fff;
+    font-size: 12px;
+}
+
+.ide-statusbar-left, .ide-statusbar-right {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.ide-mode-toggle {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.ide-mode-toggle:hover { background: rgba(255,255,255,0.25); }

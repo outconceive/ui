@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outconceive — Inter-Instance Messaging</title>
+    <link rel="stylesheet" href="css/outconceive.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0eeea;
+            padding: 24px;
+        }
+        .demo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .demo-grid > div { min-height: 0; }
+        .demo-full { grid-column: 1 / -1; }
+        h1 { text-align: center; margin-bottom: 24px; font-size: 22px; color: #333; }
+        h3 { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+
+        #log {
+            grid-column: 1 / -1;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .log-entry { padding: 2px 0; border-bottom: 1px solid #333; }
+        .log-event { color: #dcdcaa; }
+        .log-data { color: #ce9178; }
+        .log-source { color: #569cd6; }
+    </style>
+</head>
+<body>
+    <h1>Inter-Instance Messaging</h1>
+    <div class="demo-grid">
+        <div>
+            <h3>Instance A — Controller</h3>
+            <div id="instance-a"></div>
+        </div>
+        <div>
+            <h3>Instance B — Display</h3>
+            <div id="instance-b"></div>
+        </div>
+        <div>
+            <h3>Instance C — Shared State</h3>
+            <div id="instance-c"></div>
+        </div>
+        <div>
+            <h3>Instance D — Shared State Mirror</h3>
+            <div id="instance-d"></div>
+        </div>
+        <div id="log">
+            <div style="color:#569cd6;margin-bottom:8px;">Event Log</div>
+        </div>
+    </div>
+
+    <script src="js/dom-patcher.js"></script>
+    <script src="js/event-router.js"></script>
+    <script src="js/bus.js"></script>
+    <script src="js/outconceive.js"></script>
+    <script type="module">
+        import init, { OutconceiveApp } from './pkg/outconceive.js';
+
+        async function main() {
+            await init();
+
+            var bus = new OutconceiveBus();
+            var log = document.getElementById('log');
+
+            function logEvent(source, event, data) {
+                var entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.innerHTML =
+                    '<span class="log-source">[' + source + ']</span> ' +
+                    '<span class="log-event">' + event + '</span> ' +
+                    '<span class="log-data">' + JSON.stringify(data) + '</span>';
+                log.appendChild(entry);
+                log.scrollTop = log.scrollHeight;
+            }
+
+            // Instance A: Controller — sends events
+            var a = new Outconceive(new OutconceiveApp());
+            a.connect(bus);
+            a.from_markout([
+                '@card padding:16',
+                '| Send messages to Instance B',
+                '| {input:message}',
+                '| {button:send "Send Message" primary}  {button:alert "Send Alert" danger}',
+                '| {button:theme_light "Light Theme" outline}  {button:theme_dark "Dark Theme" outline}',
+                '@end card',
+            ].join('\n'));
+            a.mount('instance-a');
+
+            a.on('send', function(wasmApp) {
+                var msg = wasmApp.get_state('message');
+                bus.emit('message', { text: msg, type: 'info' });
+                logEvent('A', 'message', { text: msg });
+            });
+
+            a.on('alert', function(wasmApp) {
+                var msg = wasmApp.get_state('message');
+                bus.emit('message', { text: msg || 'Alert!', type: 'warning' });
+                logEvent('A', 'alert', { text: msg });
+            });
+
+            a.on('theme_light', function() {
+                bus.set('theme', 'light');
+                logEvent('A', 'theme', 'light');
+            });
+
+            a.on('theme_dark', function() {
+                bus.set('theme', 'dark');
+                logEvent('A', 'theme', 'dark');
+            });
+
+            // Instance B: Display — receives events
+            var b = new Outconceive(new OutconceiveApp());
+            b.connect(bus);
+            b.from_markout([
+                '@card padding:16',
+                '| Received Messages',
+                '| Last: {label:last_message}',
+                '| Type: {label:last_type}',
+                '| Count: {label:msg_count}',
+                '@end card',
+            ].join('\n'));
+            b.mount('instance-b');
+            b.set('msg_count', '0');
+
+            b.subscribe('message', function(data, self) {
+                self.set('last_message', data.text);
+                self.set('last_type', data.type);
+                var count = parseInt(self.get('msg_count') || '0', 10) + 1;
+                self.set('msg_count', String(count));
+                logEvent('B', 'received', data);
+            });
+
+            // Instance C: Shared state — syncs 'username' via bus
+            var c = new Outconceive(new OutconceiveApp());
+            c.connect(bus);
+            c.from_markout([
+                '@card padding:16',
+                '| Type here — mirrors to Instance D',
+                '| {input:username}',
+                '| Theme: {label:theme}',
+                '@end card',
+            ].join('\n'));
+            c.mount('instance-c');
+            c.syncState('username', bus);
+
+            c.subscribe('state:theme', function(value, self) {
+                self.set('theme', value);
+            });
+
+            // Instance D: Shared state mirror
+            var d = new Outconceive(new OutconceiveApp());
+            d.connect(bus);
+            d.from_markout([
+                '@card padding:16',
+                '| Mirrored from Instance C',
+                '| Username: {label:username}',
+                '| Theme: {label:theme}',
+                '@end card',
+            ].join('\n'));
+            d.mount('instance-d');
+            d.syncState('username', bus);
+
+            d.subscribe('state:theme', function(value, self) {
+                self.set('theme', value);
+            });
+        }
+
+        main().catch(function(err) {
+            document.body.innerHTML = '<div style="color:red;padding:20px">' + err.message + '</div>';
+            console.error(err);
+        });
+    </script>
+</body>
+</html>

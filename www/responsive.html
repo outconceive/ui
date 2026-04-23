@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outconceive — Responsive Demo</title>
+    <link rel="stylesheet" href="css/outconceive.css">
+    <style>
+        .mc-app { max-width: 1000px; }
+        .size-indicator {
+            position: fixed; top: 8px; right: 8px;
+            background: rgba(0,0,0,0.7); color: #fff;
+            padding: 4px 10px; border-radius: 4px;
+            font-size: 12px; font-family: monospace; z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="size-indicator" id="size"></div>
+    <div id="app"></div>
+
+    <script src="js/dom-patcher.js"></script>
+    <script src="js/event-router.js"></script>
+    <script src="js/bus.js"></script>
+    <script src="js/outconceive.js"></script>
+    <script type="module">
+        import init, { OutconceiveApp } from './pkg/outconceive.js';
+
+        // Size indicator
+        function updateSize() {
+            var w = window.innerWidth;
+            var bp = w >= 1200 ? 'xl' : w >= 992 ? 'lg' : w >= 768 ? 'md' : w >= 576 ? 'sm' : 'xs';
+            document.getElementById('size').textContent = w + 'px (' + bp + ')';
+        }
+        window.addEventListener('resize', updateSize);
+        updateSize();
+
+        async function main() {
+            await init();
+
+            var app = new Outconceive(new OutconceiveApp());
+
+            app.from_markout([
+                '@card padding:24',
+                '| Responsive Layout',
+                '| Resize the browser to see components reflow.',
+                '@end card',
+                '',
+                '@card padding:24',
+                '| Form — stacks on mobile, side-by-side on desktop',
+                '| First Name  {input:first col-12 md:col-6}',
+                '| Last Name   {input:last col-12 md:col-6}',
+                '| Email       {input:email col-12 lg:col-8}',
+                '| Phone       {input:phone col-12 lg:col-4}',
+                '| Address     {input:address col-12}',
+                '| City  {input:city col-12 md:col-5}  State  {input:state col-12 md:col-3}  Zip  {input:zip col-12 md:col-4}',
+                '@end card',
+                '',
+                '@card padding:24',
+                '| Actions — full-width on mobile, fitted on desktop',
+                '| {button:save "Save" primary col-12 sm:col-4}  {button:cancel "Cancel" outline col-12 sm:col-4}  {button:delete "Delete" danger col-12 sm:col-4}',
+                '@end card',
+                '',
+                '@card padding:24',
+                '| Dashboard Cards — 1 col mobile, 2 col tablet, 4 col desktop',
+                '| {label:users col-12 sm:col-6 lg:col-3}  {label:orders col-12 sm:col-6 lg:col-3}  {label:revenue col-12 sm:col-6 lg:col-3}  {label:growth col-12 sm:col-6 lg:col-3}',
+                '@end card',
+            ].join('\n'));
+
+            app.set('users', 'Users: 1,234');
+            app.set('orders', 'Orders: 567');
+            app.set('revenue', 'Revenue: $89K');
+            app.set('growth', 'Growth: +12%');
+
+            app.mount('app');
+        }
+
+        main().catch(function(err) {
+            document.getElementById('app').innerHTML =
+                '<div style="color:red;padding:20px">' + err.message + '</div>';
+            console.error(err);
+        });
+    </script>
+</body>
+</html>

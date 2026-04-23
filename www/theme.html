@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outconceive — Theming Demo</title>
+    <link rel="stylesheet" href="css/outconceive.css">
+    <style>
+        .theme-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .theme-grid > div:first-child { grid-column: 1 / -1; }
+        h1 { text-align: center; margin-bottom: 24px; font-size: 22px; }
+    </style>
+</head>
+<body>
+    <h1>Outconceive Theming</h1>
+    <div class="theme-grid">
+        <div id="controls"></div>
+        <div id="form-demo"></div>
+        <div id="card-demo"></div>
+    </div>
+
+    <script src="js/dom-patcher.js"></script>
+    <script src="js/event-router.js"></script>
+    <script src="js/bus.js"></script>
+    <script src="js/outconceive.js"></script>
+    <script type="module">
+        import init, { OutconceiveApp } from './pkg/outconceive.js';
+
+        async function main() {
+            await init();
+
+            // Theme switcher
+            var controls = new Outconceive(new OutconceiveApp());
+            controls.from_markout([
+                '@card padding:16',
+                '| Theme Switcher',
+                '| {button:light "Light" outline}  {button:dark "Dark" outline}  {button:nord "Nord" outline}  {button:custom "Custom" primary}',
+                '@end card',
+            ].join('\n'));
+            controls.mount('controls');
+
+            controls.on('light', function() { Outconceive.theme('light'); });
+            controls.on('dark', function() { Outconceive.theme('dark'); });
+            controls.on('nord', function() { Outconceive.theme('nord'); });
+            controls.on('custom', function() {
+                Outconceive.theme({
+                    'bg': '#fdf6e3',
+                    'text': '#657b83',
+                    'text-muted': '#839496',
+                    'card-bg': '#eee8d5',
+                    'card-shadow': '0 2px 8px rgba(0,0,0,0.08)',
+                    'border': '#93a1a1',
+                    'border-light': '#d3cbb7',
+                    'input-bg': '#fdf6e3',
+                    'hover': '#ddd6c1',
+                    'accent': '#268bd2',
+                    'accent-hover': '#1a6fb0',
+                    'accent-subtle': 'rgba(38,139,210,0.1)',
+                    'accent-ring': 'rgba(38,139,210,0.2)',
+                    'danger': '#dc322f',
+                    'success': '#859900',
+                });
+            });
+
+            // Form demo
+            var form = new Outconceive(new OutconceiveApp());
+            form.from_markout([
+                '@card padding:24',
+                '| Sample Form',
+                '| Username  {input:username validate:required}',
+                '| Email     {input:email validate:required,email}',
+                '| Password  {password:password validate:required,min:6}',
+                '| {checkbox:agree} I agree to the terms',
+                '| {button:submit "Submit" primary}  {button:cancel "Cancel" outline}  {button:delete "Delete" danger}',
+                '@end card',
+            ].join('\n'));
+            form.mount('form-demo');
+
+            form.on('submit', function() {
+                var result = form.validate();
+                if (result.valid) alert('Valid!');
+            });
+
+            // Card demo
+            var cards = new Outconceive(new OutconceiveApp());
+            cards.from_markout([
+                '@card padding:24',
+                '| Components',
+                '| {button:a "Primary" primary}  {button:b "Secondary" secondary}  {button:c "Ghost" ghost}',
+                '| {button:d "Warning" warning}  {button:e "Outline" outline}  {button:f "Danger" danger}',
+                '| Text input: {input:sample}',
+                '| {label:info}',
+                '@end card',
+            ].join('\n'));
+            cards.mount('card-demo');
+            cards.set('info', 'All components respond to the active theme.');
+        }
+
+        main().catch(function(err) {
+            document.body.innerHTML = '<div style="color:red;padding:20px">' + err.message + '</div>';
+            console.error(err);
+        });
+    </script>
+</body>
+</html>

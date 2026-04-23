@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outconceive UI — Demo</title>
+    <link rel="stylesheet" href="css/outconceive.css">
+    <style>
+        .demo-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .demo-header h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .demo-header p {
+            color: #888;
+            font-size: 14px;
+        }
+        #app {
+            min-height: 100px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        .debug-panel {
+            margin-top: 32px;
+            padding: 16px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .debug-panel h3 {
+            color: #569cd6;
+            margin: 0 0 8px 0;
+            font-size: 13px;
+        }
+        .debug-entry {
+            padding: 2px 0;
+            border-bottom: 1px solid #333;
+        }
+        .debug-entry .action { color: #dcdcaa; }
+        .debug-entry .key { color: #9cdcfe; }
+        .debug-entry .value { color: #ce9178; }
+        .debug-entry .patches { color: #6a9955; }
+    </style>
+</head>
+<body>
+    <div class="demo-header">
+        <h1>Outconceive UI</h1>
+        <p>Parallel strings framework — no trees, no reconciliation</p>
+    </div>
+
+    <div id="app">
+        <div class="loading">Loading WASM...</div>
+    </div>
+
+    <div class="debug-panel" id="debug">
+        <h3>Event Log</h3>
+    </div>
+
+    <script src="js/dom-patcher.js"></script>
+    <script src="js/event-router.js"></script>
+    <script type="module">
+        import init, { OutconceiveApp } from './pkg/outconceive.js';
+
+        async function main() {
+            await init();
+
+            var app = new OutconceiveApp();
+            var container = document.getElementById('app');
+            var debugPanel = document.getElementById('debug');
+
+            // Build UI from Markout
+            app.from_markout([
+                '@card shadow:md padding:24',
+                '| Login',
+                '| Username  {input:username}',
+                '| Password  {password:password}',
+                '| {checkbox:remember} Remember me',
+                '| {button:submit "Sign In" primary}',
+                '| Status: {label:status}',
+                '@end card',
+                '',
+                '@card padding:16',
+                '| Counter Demo',
+                '| {button:decrement "-" outline}  {label:count}  {button:increment "+" primary}',
+                '@end card',
+                '',
+                '@columns cols:3 gap:24 height:200px',
+                '| Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+                '| Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+                '| Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
+                '| Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+                '@end columns',
+            ].join('\n'));
+
+            // Initial render
+            var vdom = app.initial_render();
+            var patcher = new DomPatcher(container);
+            patcher.renderInitial(vdom);
+
+            // Event routing
+            var router = new EventRouter(container, app, patcher);
+
+            // Register action handlers
+            router.on('submit', function(app) {
+                var username = app.get_state('username');
+                var password = app.get_state('password');
+                var remember = app.get_state_bool('remember');
+
+                var msg = 'Logging in: ' + username;
+                if (remember) msg += ' (remember me)';
+
+                logDebug('action', 'submit', msg, 0);
+
+                var patches = app.update_state('status', 'Logging in as ' + username + '...');
+                patcher.applyPatches(patches);
+
+                // Simulate async login
+                setTimeout(function() {
+                    var patches = app.update_state('status', 'Welcome, ' + username + '!');
+                    patcher.applyPatches(patches);
+                    logDebug('state', 'status', 'Welcome, ' + username + '!', patches.length);
+                }, 1000);
+            });
+
+            // Counter handlers
+            router.on('increment', function(app) {
+                var n = parseFloat(app.get_state('count') || '0') + 1;
+                var patches = app.update_state('count', String(n));
+                patcher.applyPatches(patches);
+                logDebug('action', 'increment', String(n), patches.length);
+            });
+
+            router.on('decrement', function(app) {
+                var n = parseFloat(app.get_state('count') || '0') - 1;
+                var patches = app.update_state('count', String(n));
+                patcher.applyPatches(patches);
+                logDebug('action', 'decrement', String(n), patches.length);
+            });
+
+            router.attach();
+
+            // Wrap input events for debug logging
+            container.addEventListener('input', function(e) {
+                var bind = e.target.getAttribute('data-bind');
+                if (bind) {
+                    var value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+                    logDebug('input', bind, String(value), '~');
+                }
+            });
+
+            logDebug('init', 'app', 'Outconceive loaded', 0);
+
+            function logDebug(action, key, value, patchCount) {
+                var entry = document.createElement('div');
+                entry.className = 'debug-entry';
+                entry.innerHTML =
+                    '<span class="action">' + action + '</span> ' +
+                    '<span class="key">' + key + '</span> = ' +
+                    '<span class="value">"' + value + '"</span> ' +
+                    '<span class="patches">[' + patchCount + ' patches]</span>';
+                debugPanel.appendChild(entry);
+                debugPanel.scrollTop = debugPanel.scrollHeight;
+            }
+        }
+
+        main().catch(function(err) {
+            document.getElementById('app').innerHTML =
+                '<div style="color:red;padding:20px">Failed to load: ' + err.message + '</div>';
+            console.error(err);
+        });
+    </script>
+</body>
+</html>

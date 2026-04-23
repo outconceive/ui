@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outconceive — Animation Demo</title>
+    <link rel="stylesheet" href="css/outconceive.css">
+    <style>body { background: #f0eeea; padding: 32px; }</style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script src="js/dom-patcher.js"></script>
+    <script src="js/event-router.js"></script>
+    <script src="js/bus.js"></script>
+    <script src="js/outconceive.js"></script>
+    <script type="module">
+        import init, { OutconceiveApp } from './pkg/outconceive.js';
+
+        async function main() {
+            await init();
+
+            var app = new Outconceive(new OutconceiveApp());
+
+            app.from_markout([
+                '@card padding:24',
+                '| Animations',
+                '|',
+                '| {label:fade_label animate:fade}',
+                '| {label:slide_label animate:slide}',
+                '| {label:slide_up_label animate:slide-up}',
+                '| {label:scale_label animate:scale}',
+                '| {label:bounce_label animate:bounce}',
+                '|',
+                '| {button:replay "Replay All" primary}',
+                '@end card',
+                '',
+                '@card padding:24',
+                '| Interactive Animations',
+                '| {input:message}  {button:send "Send" primary}',
+                '| {label:status animate:fade}',
+                '|',
+                '| Counter with bounce:',
+                '| {button:dec "-" outline}  {label:count animate:bounce}  {button:inc "+" primary}',
+                '|',
+                '| Continuous animations:',
+                '| {label:pulse_label animate:pulse}  {label:glow_label animate:glow}',
+                '@end card',
+            ].join('\n'));
+
+            app.set('fade_label', 'Fade In');
+            app.set('slide_label', 'Slide In');
+            app.set('slide_up_label', 'Slide Up');
+            app.set('scale_label', 'Scale In');
+            app.set('bounce_label', 'Bounce In');
+            app.set('count', '0');
+            app.set('pulse_label', 'Pulsing...');
+            app.set('glow_label', 'Glowing...');
+
+            app.mount('app');
+
+            app.on('replay', function() {
+                // Re-trigger by toggling content
+                ['fade_label', 'slide_label', 'slide_up_label', 'scale_label', 'bounce_label'].forEach(function(key) {
+                    app.animate(key, key.replace('_label', '').replace('_', '-'));
+                });
+            });
+
+            app.on('send', function(wasmApp) {
+                var msg = wasmApp.get_state('message') || 'Hello!';
+                app.set('status', 'Sent: ' + msg);
+                app.animate('status', 'fade');
+            });
+
+            app.on('inc', function(wasmApp) {
+                var n = parseInt(wasmApp.get_state('count') || '0', 10) + 1;
+                app.set('count', String(n));
+                app.animate('count', 'bounce');
+            });
+
+            app.on('dec', function(wasmApp) {
+                var n = parseInt(wasmApp.get_state('count') || '0', 10) - 1;
+                app.set('count', String(n));
+                app.animate('count', 'shake');
+            });
+        }
+
+        main().catch(function(err) {
+            document.getElementById('app').innerHTML =
+                '<div style="color:red;padding:20px">' + err.message + '</div>';
+            console.error(err);
+        });
+    </script>
+</body>
+</html>

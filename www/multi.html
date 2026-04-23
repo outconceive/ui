@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outconceive — Multi-Mount Demo</title>
+    <link rel="stylesheet" href="css/outconceive.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            height: 100vh;
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            grid-template-rows: auto 1fr auto;
+        }
+
+        #header {
+            grid-column: 1 / -1;
+            background: #1e1e2e;
+        }
+
+        #sidebar {
+            background: #f5f5f5;
+            border-right: 1px solid #e0e0e0;
+            padding: 0;
+            overflow-y: auto;
+        }
+
+        #main {
+            padding: 32px;
+            overflow-y: auto;
+            background: #fafafa;
+        }
+
+        #footer {
+            grid-column: 1 / -1;
+            background: #1e1e2e;
+        }
+
+        /* Override mc-app max-width for sidebar/header/footer */
+        #sidebar .mc-app,
+        #header .mc-app,
+        #footer .mc-app {
+            max-width: none;
+        }
+
+        #sidebar .mc-row { padding: 8px 16px; }
+        #sidebar .mc-label { font-size: 14px; }
+        #sidebar .mc-button {
+            width: 100%;
+            text-align: left;
+            border: none;
+            background: transparent;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+        #sidebar .mc-button:hover { background: #e8e8e8; }
+
+        #header .mc-row {
+            padding: 12px 20px;
+            color: #fff;
+        }
+        #header .mc-label { color: #fff; font-size: 16px; font-weight: 600; }
+        #header .mc-input {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+        #header .mc-input::placeholder { color: rgba(255,255,255,0.5); }
+
+        #footer .mc-row { padding: 10px 20px; }
+        #footer .mc-label { color: #888; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div id="header"></div>
+    <div id="sidebar"></div>
+    <div id="main"></div>
+    <div id="footer"></div>
+
+    <script src="js/dom-patcher.js"></script>
+    <script src="js/event-router.js"></script>
+    <script src="js/outconceive.js"></script>
+    <script src="js/router.js"></script>
+    <script type="module">
+        import init, { OutconceiveApp } from './pkg/outconceive.js';
+
+        async function main() {
+            await init();
+
+            // Header
+            var header = new Outconceive(new OutconceiveApp());
+            header.from_markout('| Outconceive App  {input:search}');
+            header.mount('header');
+
+            // Sidebar — declarative route: links
+            var sidebar = new Outconceive(new OutconceiveApp());
+            sidebar.from_markout([
+                '| Navigation',
+                '| {button:nav "Dashboard" ghost route:/dashboard}',
+                '| {button:nav "Users" ghost route:/users}',
+                '| {button:nav "Settings" ghost route:/settings}',
+                '| {button:nav "Reports" ghost route:/reports}',
+            ].join('\n'));
+            sidebar.mount('sidebar');
+
+            // Main content — router target
+            var mainView = new Outconceive(new OutconceiveApp());
+            mainView.mount('main');
+
+            // Router
+            var router = new OutconceiveRouter(mainView);
+            router
+                .route('/dashboard', [
+                    '@card padding:24',
+                    '| Dashboard',
+                    '| Welcome to Outconceive. Each section of this page is an independent Outconceive instance.',
+                    '@end card',
+                    '',
+                    '@columns cols:3 gap:16 height:120px',
+                    '| Users: 1,234',
+                    '| Revenue: $56,789',
+                    '| Growth: +12.3%',
+                    '@end columns',
+                ].join('\n'))
+                .route('/users', [
+                    '@card padding:24',
+                    '| Users',
+                    '| {input:user_search col-8}  {button:add_user "Add User" primary col-4}',
+                    '@end card',
+                ].join('\n'))
+                .route('/settings', [
+                    '@card padding:24',
+                    '| Settings',
+                    '| Theme  {select:theme}',
+                    '| {checkbox:notifications} Enable notifications',
+                    '| {checkbox:darkmode} Dark mode',
+                    '| {button:save_settings "Save" primary}',
+                    '@end card',
+                ].join('\n'))
+                .route('/reports', [
+                    '@card padding:24',
+                    '| Reports',
+                    '| Date range  {input:date_from col-4}  to  {input:date_to col-4}',
+                    '| {button:generate "Generate Report" primary}',
+                    '@end card',
+                ].join('\n'))
+                .default('/dashboard')
+                .start();
+
+            // Footer
+            var footer = new Outconceive(new OutconceiveApp());
+            footer.from_markout('| Outconceive UI v0.1 — Parallel strings framework');
+            footer.mount('footer');
+        }
+
+        main().catch(function(err) {
+            console.error(err);
+            document.body.innerHTML = '<div style="color:red;padding:20px">' + err.message + '</div>';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outconceive — Computed State Demo</title>
+    <link rel="stylesheet" href="css/outconceive.css">
+    <style>body { background: #f0eeea; padding: 32px; }</style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script src="js/dom-patcher.js"></script>
+    <script src="js/event-router.js"></script>
+    <script src="js/outconceive.js"></script>
+    <script type="module">
+        import init, { OutconceiveApp } from './pkg/outconceive.js';
+
+        async function main() {
+            await init();
+
+            var app = new Outconceive(new OutconceiveApp());
+
+            app.from_markout([
+                '@card padding:24',
+                '| Price Calculator',
+                '|',
+                '| Price    {input:price col-4}',
+                '| Quantity {input:qty col-4}',
+                '| Tax %    {input:tax col-4}',
+                '|',
+                '| Subtotal: {label:subtotal}',
+                '| Tax:      {label:tax_amount}',
+                '| Total:    {label:total}',
+                '@end card',
+                '',
+                '@card padding:24',
+                '| Todo with Auto-Summary',
+                '| {input:new_todo col-9}  {button:add "Add" primary col-3}',
+                '@each todos',
+                '| {checkbox:done}  {label:text}  {button:remove "X" danger}',
+                '@end each',
+                '| {label:summary}',
+                '@end card',
+            ].join('\n'));
+
+            // Seed defaults
+            app.app.update_state('price', '10.00');
+            app.app.update_state('qty', '3');
+            app.app.update_state('tax', '8.5');
+
+            // Seed todos
+            app.app.add_list_item('todos', JSON.stringify({ text: 'Learn Outconceive', done: true }));
+            app.app.add_list_item('todos', JSON.stringify({ text: 'Build something cool', done: false }));
+
+            // Computed: subtotal = price * qty
+            app.computed('subtotal', ['price', 'qty'], function(get) {
+                var p = parseFloat(get('price') || '0');
+                var q = parseFloat(get('qty') || '0');
+                return '$' + (p * q).toFixed(2);
+            });
+
+            // Computed: tax_amount
+            app.computed('tax_amount', ['price', 'qty', 'tax'], function(get) {
+                var p = parseFloat(get('price') || '0');
+                var q = parseFloat(get('qty') || '0');
+                var t = parseFloat(get('tax') || '0');
+                return '$' + (p * q * t / 100).toFixed(2);
+            });
+
+            // Computed: total = subtotal + tax
+            app.computed('total', ['price', 'qty', 'tax'], function(get) {
+                var p = parseFloat(get('price') || '0');
+                var q = parseFloat(get('qty') || '0');
+                var t = parseFloat(get('tax') || '0');
+                var subtotal = p * q;
+                return '$' + (subtotal + subtotal * t / 100).toFixed(2);
+            });
+
+            // Computed: todo summary
+            app.computed('summary', ['todos'], function(get) {
+                var count = get.count('todos');
+                var done = 0;
+                for (var i = 0; i < count; i++) {
+                    if (get.bool('todos.' + i + '.done')) done++;
+                }
+                return done + '/' + count + ' completed';
+            });
+
+            // Effect: log when total changes
+            app.effect(['total'], function(get) {
+                console.log('Total updated:', get('total'));
+            });
+
+            app.mount('app');
+
+            // Add todo action
+            app.on('add', function(wasmApp) {
+                var text = wasmApp.get_state('new_todo');
+                if (!text) return;
+                var patches = wasmApp.add_list_item('todos', JSON.stringify({ text: text, done: false }));
+                app.patcher.applyPatches(patches);
+                wasmApp.update_state('new_todo', '');
+                app.patcher.applyPatches(wasmApp.render());
+            });
+        }
+
+        main().catch(function(err) {
+            document.getElementById('app').innerHTML =
+                '<div style="color:red;padding:20px">' + err.message + '</div>';
+            console.error(err);
+        });
+    </script>
+</body>
+</html>

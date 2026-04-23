@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outconceive — Persistence Demo</title>
+    <link rel="stylesheet" href="css/outconceive.css">
+    <style>
+        body { background: #f0eeea; padding: 32px; }
+        .hint { font-size: 13px; color: #888; text-align: center; margin-top: 16px; }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    <p class="hint">Type in the fields, then refresh the page — your data persists.</p>
+
+    <script src="js/dom-patcher.js"></script>
+    <script src="js/event-router.js"></script>
+    <script src="js/bus.js"></script>
+    <script src="js/outconceive.js"></script>
+    <script type="module">
+        import init, { OutconceiveApp } from './pkg/outconceive.js';
+
+        async function main() {
+            await init();
+
+            var app = new Outconceive(new OutconceiveApp());
+
+            app.from_markout([
+                '@card padding:24',
+                '| Persistent Settings',
+                '|',
+                '| Name     {input:name}',
+                '| Email    {input:email}',
+                '| Theme    {input:theme}',
+                '| {checkbox:notifications} Enable notifications',
+                '| {checkbox:darkmode} Dark mode',
+                '|',
+                '| {button:save "Save" primary}  {button:clear "Clear Saved Data" danger}  {label:status}',
+                '@end card',
+            ].join('\n'));
+
+            // Persist specific keys to localStorage
+            app.persist('settings', ['name', 'email', 'theme', 'notifications', 'darkmode']);
+
+            app.mount('app');
+
+            app.on('save', function(wasmApp) {
+                app.set('status', 'Saved! Refresh the page to see persistence.');
+            });
+
+            app.on('clear', function(wasmApp) {
+                app.clearPersisted();
+                app.set('status', 'Cleared. Refresh to start fresh.');
+            });
+        }
+
+        main().catch(function(err) {
+            document.getElementById('app').innerHTML =
+                '<div style="color:red;padding:20px">' + err.message + '</div>';
+            console.error(err);
+        });
+    </script>
+</body>
+</html>

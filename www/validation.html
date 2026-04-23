@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outconceive — Validation Demo</title>
+    <link rel="stylesheet" href="css/outconceive.css">
+    <style>body { background: #f0eeea; padding: 32px; }</style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script src="js/dom-patcher.js"></script>
+    <script src="js/event-router.js"></script>
+    <script src="js/outconceive.js"></script>
+    <script type="module">
+        import init, { OutconceiveApp } from './pkg/outconceive.js';
+
+        async function main() {
+            await init();
+
+            var app = new Outconceive(new OutconceiveApp());
+
+            app.from_markout([
+                '@card padding:24',
+                '| Registration Form',
+                '|',
+                '| Name     {input:name validate:required,min:2}',
+                '| Email    {input:email validate:required,email}',
+                '| Age      {input:age validate:required,number}',
+                '| Website  {input:website validate:url}',
+                '| Password {password:password validate:required,min:8}',
+                '|',
+                '| {button:submit "Register" primary}  {label:result}',
+                '@end card',
+            ].join('\n'));
+
+            app.mount('app');
+
+            // Custom validator
+            app.addValidator('adult', function(value) {
+                var age = parseInt(value, 10);
+                return (!isNaN(age) && age >= 18) ? null : 'Must be 18 or older';
+            });
+
+            app.on('submit', function(wasmApp) {
+                var result = app.validate();
+
+                if (result.valid) {
+                    var patches = wasmApp.update_state('result', 'All fields valid!');
+                    app.patcher.applyPatches(patches);
+                } else {
+                    var count = Object.keys(result.errors).length;
+                    var patches = wasmApp.update_state('result', count + ' error(s) found');
+                    app.patcher.applyPatches(patches);
+                }
+            });
+        }
+
+        main().catch(function(err) {
+            document.getElementById('app').innerHTML =
+                '<div style="color:red;padding:20px">' + err.message + '</div>';
+            console.error(err);
+        });
+    </script>
+</body>
+</html>

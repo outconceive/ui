@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outconceive — SSR Demo</title>
+    <link rel="stylesheet" href="css/outconceive.css">
+    <style>
+        body { background: #f0eeea; padding: 32px; }
+        .ssr-info {
+            max-width: 800px; margin: 0 auto 16px;
+            padding: 12px 16px; background: var(--mc-card-bg);
+            border-radius: 8px; font-size: 13px; color: var(--mc-text-muted);
+            border-left: 3px solid var(--mc-accent);
+        }
+        .ssr-info strong { color: var(--mc-text); }
+        #ssr-timing { font-family: monospace; }
+        #html-preview {
+            max-width: 800px; margin: 16px auto;
+            padding: 16px; background: #1e1e1e; color: #d4d4d4;
+            border-radius: 8px; font-family: monospace; font-size: 11px;
+            white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="ssr-info">
+        <strong>SSR Demo</strong> — The HTML below was rendered server-side (in WASM), injected into the DOM,
+        then hydrated with event handlers. <span id="ssr-timing"></span>
+    </div>
+
+    <div id="app">
+        <!-- SSR content injected here before hydration -->
+    </div>
+
+    <div id="html-preview"></div>
+
+    <script src="js/dom-patcher.js"></script>
+    <script src="js/event-router.js"></script>
+    <script src="js/bus.js"></script>
+    <script src="js/outconceive.js"></script>
+    <script type="module">
+        import init, { OutconceiveApp } from './pkg/outconceive.js';
+
+        async function main() {
+            await init();
+
+            var markout = [
+                '@card padding:24',
+                '| SSR + Hydration',
+                '|',
+                '| Name  {input:name validate:required}',
+                '| Email {input:email validate:required,email}',
+                '|',
+                '| {button:greet "Say Hello" primary}  {label:greeting animate:fade}',
+                '|',
+                '| Counter: {button:dec "-" outline}  {label:count}  {button:inc "+" primary}',
+                '@end card',
+            ].join('\n');
+
+            // === Phase 1: Server-Side Render ===
+            var t0 = performance.now();
+
+            var ssrApp = new OutconceiveApp();
+            ssrApp.from_markout(markout);
+            ssrApp.update_state('count', '0');
+            ssrApp.update_state('greeting', '');
+            var html = ssrApp.render_to_html();
+
+            var t1 = performance.now();
+
+            // Inject SSR HTML into the DOM (simulates server response)
+            document.getElementById('app').innerHTML = html;
+
+            // Show the raw HTML
+            document.getElementById('html-preview').textContent = 'SSR HTML (' + html.length + ' bytes):\n\n' + html;
+
+            // === Phase 2: Hydrate ===
+            var t2 = performance.now();
+
+            var app = new Outconceive(new OutconceiveApp());
+            app.from_markout(markout);
+            app.app.update_state('count', '0');
+
+            // Hydrate instead of mount — attaches to existing DOM
+            app.hydrate('app');
+
+            var t3 = performance.now();
+
+            document.getElementById('ssr-timing').textContent =
+                'SSR: ' + (t1 - t0).toFixed(1) + 'ms | Hydrate: ' + (t3 - t2).toFixed(1) + 'ms';
+
+            // Event handlers work after hydration
+            app.on('greet', function(wasmApp) {
+                var name = wasmApp.get_state('name') || 'World';
+                app.set('greeting', 'Hello, ' + name + '!');
+                app.animate('greeting', 'fade');
+            });
+
+            app.on('inc', function(wasmApp) {
+                var n = parseInt(wasmApp.get_state('count') || '0', 10) + 1;
+                app.set('count', String(n));
+            });
+
+            app.on('dec', function(wasmApp) {
+                var n = parseInt(wasmApp.get_state('count') || '0', 10) - 1;
+                app.set('count', String(n));
+            });
+        }
+
+        main().catch(function(err) {
+            document.getElementById('app').innerHTML =
+                '<div style="color:red;padding:20px">' + err.message + '</div>';
+            console.error(err);
+        });
+    </script>
+</body>
+</html>

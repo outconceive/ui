@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outconceive — Widgets Demo</title>
+    <link rel="stylesheet" href="css/outconceive.css">
+    <style>body { background: #f0eeea; padding: 32px; }</style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script src="js/dom-patcher.js"></script>
+    <script src="js/event-router.js"></script>
+    <script src="js/bus.js"></script>
+    <script src="js/outconceive.js"></script>
+    <script type="module">
+        import init, { OutconceiveApp } from './pkg/outconceive.js';
+
+        async function main() {
+            await init();
+
+            var app = new Outconceive(new OutconceiveApp());
+
+            app.from_markout([
+                '@card padding:24',
+                '| Widgets Gallery',
+                '|',
+                '| Pills',
+                '| {pill:s1 "Active" primary}  {pill:s2 "Pending" warning}  {pill:s3 "Closed" secondary}  {pill:s4 "Error" danger}  {pill:s5 "Info" info}  {pill:s6 "Outline" outline}',
+                '|',
+                '| Badges',
+                '| Notifications {badge:notif "5" danger}  Messages {badge:msgs "12" primary}  Alerts {badge:alerts "!" warning}  Updates {badge:updates "99+" info}',
+                '|',
+                '| Progress Bars',
+                '| Upload: {progress:upload}',
+                '| Processing: {progress:process}',
+                '| Complete: {progress:done primary}',
+                '|',
+                '| Sparklines',
+                '| Revenue {sparkline:revenue}',
+                '| Users {sparkline:users success}',
+                '| Errors {sparkline:errors danger}',
+                '|',
+                '| Popovers (hover me)',
+                '| {button:info "Hover for info" outline popover:"This button does something important"}  {pill:help "?" primary popover:"Need help? Click here"}  {label:tip popover:"This label has extra context"}',
+                '|',
+                '| {button:animate_all "Animate Progress" primary}  {button:randomize "Randomize Sparklines" outline}',
+                '@end card',
+            ].join('\n'));
+
+            // Set initial values
+            app.app.update_state('upload', '35');
+            app.app.update_state('process', '68');
+            app.app.update_state('done', '100');
+            app.app.update_state('revenue', '10,25,18,30,45,38,52,48,60');
+            app.app.update_state('users', '100,120,115,140,160,155,180,200,210');
+            app.app.update_state('errors', '5,8,3,12,6,2,9,4,1');
+            app.app.update_state('tip', 'Hover me');
+
+            app.mount('app');
+
+            // Animate progress bars
+            app.on('animate_all', function(wasmApp) {
+                var v = 0;
+                var interval = setInterval(function() {
+                    v += 2;
+                    if (v > 100) { clearInterval(interval); return; }
+                    var p = wasmApp.update_state('upload', String(v));
+                    app.patcher.applyPatches(p);
+                    p = wasmApp.update_state('process', String(Math.min(v * 1.5, 100)));
+                    app.patcher.applyPatches(p);
+                }, 50);
+            });
+
+            // Randomize sparklines
+            app.on('randomize', function(wasmApp) {
+                function rand(n) {
+                    var vals = [];
+                    for (var i = 0; i < n; i++) vals.push(Math.floor(Math.random() * 100));
+                    return vals.join(',');
+                }
+                var p1 = wasmApp.update_state('revenue', rand(12));
+                app.patcher.applyPatches(p1);
+                var p2 = wasmApp.update_state('users', rand(12));
+                app.patcher.applyPatches(p2);
+                var p3 = wasmApp.update_state('errors', rand(12));
+                app.patcher.applyPatches(p3);
+            });
+        }
+
+        main().catch(function(err) {
+            document.getElementById('app').innerHTML =
+                '<div style="color:red;padding:20px">' + err.message + '</div>';
+            console.error(err);
+        });
+    </script>
+</body>
+</html>

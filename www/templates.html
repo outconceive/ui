@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outconceive — Templates Demo</title>
+    <link rel="stylesheet" href="css/outconceive.css">
+    <style>body { background: #f0eeea; padding: 32px; }</style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script src="js/dom-patcher.js"></script>
+    <script src="js/event-router.js"></script>
+    <script src="js/bus.js"></script>
+    <script src="js/outconceive.js"></script>
+    <script type="module">
+        import init, { OutconceiveApp } from './pkg/outconceive.js';
+
+        async function main() {
+            await init();
+
+            var app = new Outconceive(new OutconceiveApp());
+
+            app.from_markout([
+                '// Define a reusable contact card template',
+                '@define contact_card',
+                '@card padding:16',
+                '| {label:name animate:slide}',
+                '| Email: {label:email}',
+                '| Role:  {label:role}',
+                '| {button:msg "Message" primary col-6}  {button:del "Remove" danger col-6}',
+                '@end card',
+                '@end define',
+                '',
+                '// Define a stat widget template',
+                '@define stat_widget',
+                '@card padding:16',
+                '| {label:title}',
+                '| {label:value animate:fade}',
+                '@end card',
+                '@end define',
+                '',
+                '// Define a form field template',
+                '@define form_field',
+                '| {label:label_text col-4}  {input:value validate:required col-8}',
+                '@end define',
+                '',
+                '// Use the templates',
+                '',
+                '@card padding:24',
+                '| Team Directory',
+                '| Reusable contact cards, each with independent state:',
+                '@end card',
+                '',
+                '@use contact_card scope=alice',
+                '@use contact_card scope=bob',
+                '@use contact_card scope=carol',
+                '',
+                '@card padding:24',
+                '| Dashboard Stats',
+                '| Same stat widget template, different data:',
+                '@end card',
+                '',
+                '| {use:stat_a col-4}  {use:stat_b col-4}  {use:stat_c col-4}',
+                '@use stat_widget scope=stat_a',
+                '@use stat_widget scope=stat_b',
+                '@use stat_widget scope=stat_c',
+                '',
+                '@card padding:24',
+                '| Registration Form (from template)',
+                '@use form_field scope=field_name',
+                '@use form_field scope=field_email',
+                '@use form_field scope=field_phone',
+                '| {button:register "Register" primary}  {label:form_status animate:fade}',
+                '@end card',
+            ].join('\n'));
+
+            // Set state for contact cards
+            app.set('alice.name', 'Alice Johnson');
+            app.set('alice.email', 'alice@example.com');
+            app.set('alice.role', 'Engineering Lead');
+
+            app.set('bob.name', 'Bob Smith');
+            app.set('bob.email', 'bob@example.com');
+            app.set('bob.role', 'Designer');
+
+            app.set('carol.name', 'Carol Williams');
+            app.set('carol.email', 'carol@example.com');
+            app.set('carol.role', 'Product Manager');
+
+            // Set stat widget data
+            app.set('stat_a.title', 'Users');
+            app.set('stat_a.value', '1,234');
+            app.set('stat_b.title', 'Revenue');
+            app.set('stat_b.value', '$56,789');
+            app.set('stat_c.title', 'Growth');
+            app.set('stat_c.value', '+12.3%');
+
+            // Form field labels
+            app.set('field_name.label_text', 'Full Name');
+            app.set('field_email.label_text', 'Email');
+            app.set('field_phone.label_text', 'Phone');
+
+            app.mount('app');
+
+            // Message buttons
+            app.on('msg', function(wasmApp) {
+                alert('Message feature coming soon!');
+            });
+
+            // Register
+            app.on('register', function() {
+                var result = app.validate();
+                if (result.valid) {
+                    app.set('form_status', 'Registered!');
+                    app.animate('form_status', 'fade');
+                } else {
+                    var count = Object.keys(result.errors).length;
+                    app.set('form_status', count + ' field(s) need attention');
+                    app.animate('form_status', 'shake');
+                }
+            });
+        }
+
+        main().catch(function(err) {
+            document.getElementById('app').innerHTML =
+                '<div style="color:red;padding:20px">' + err.message + '</div>';
+            console.error(err);
+        });
+    </script>
+</body>
+</html>

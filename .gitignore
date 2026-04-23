@@ -1,0 +1,13 @@
+# Rust
+target/
+Cargo.lock
+
+# WASM build output
+www/pkg/
+
+# Node
+node_modules/
+
+# VitePress
+docs-mvp/.vitepress/cache/
+docs-mvp/.vitepress/dist/

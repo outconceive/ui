@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outconceive — Fetch Demo</title>
+    <link rel="stylesheet" href="css/outconceive.css">
+    <style>body { background: #f0eeea; padding: 32px; }</style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script src="js/dom-patcher.js"></script>
+    <script src="js/event-router.js"></script>
+    <script src="js/outconceive.js"></script>
+    <script type="module">
+        import init, { OutconceiveApp } from './pkg/outconceive.js';
+
+        // Mock fetch for demo (intercepts /api/* calls)
+        var realFetch = window.fetch;
+        window.fetch = function(url, opts) {
+            if (typeof url === 'string' && url.startsWith('/api/')) {
+                return new Promise(function(resolve) {
+                    setTimeout(function() {
+                        var data = getMockData(url);
+                        resolve({
+                            ok: true,
+                            json: function() { return Promise.resolve(data); }
+                        });
+                    }, 500); // Simulate network delay
+                });
+            }
+            return realFetch(url, opts);
+        };
+
+        function getMockData(url) {
+            switch (url) {
+                case '/api/users':
+                    return [
+                        { name: 'Alice Johnson', email: 'alice@example.com', role: 'Admin' },
+                        { name: 'Bob Smith', email: 'bob@example.com', role: 'User' },
+                        { name: 'Carol Williams', email: 'carol@example.com', role: 'Editor' },
+                        { name: 'Dave Brown', email: 'dave@example.com', role: 'User' },
+                    ];
+                case '/api/stats':
+                    return { users: '1,234', revenue: '$56,789', growth: '+12.3%' };
+                default:
+                    return { message: 'Unknown endpoint' };
+            }
+        }
+
+        async function main() {
+            await init();
+
+            var app = new Outconceive(new OutconceiveApp());
+
+            app.from_markout([
+                '@card padding:24',
+                '| Fetch Demo',
+                '|',
+                '| {button:load_users "Load Users" primary fetch:/api/users}  {button:load_stats "Load Stats" outline fetch:/api/stats}  {label:users._loading}',
+                '@end card',
+                '',
+                '@card padding:16',
+                '| Stats',
+                '| Users: {label:stats.users}  Revenue: {label:stats.revenue}  Growth: {label:stats.growth}',
+                '@end card',
+                '',
+                '@card padding:16',
+                '| User List',
+                '@each users',
+                '| {label:name col-4}  {label:email col-4}  {label:role col-4}',
+                '@end each',
+                '| {label:users_summary}',
+                '@end card',
+            ].join('\n'));
+
+            // Computed: loading indicator
+            app.computed('users._loading', ['users._loading'], function(get) {
+                return get('users._loading') === 'true' ? 'Loading...' : '';
+            });
+
+            // Computed: user count
+            app.computed('users_summary', ['users'], function(get) {
+                var count = get.count('users');
+                return count > 0 ? count + ' users loaded' : 'Click "Load Users" to fetch data';
+            });
+
+            app.mount('app');
+
+            // Programmatic fetch example
+            app.on('load_stats', function(wasmApp) {
+                app.fetch('stats', '/api/stats');
+            });
+        }
+
+        main().catch(function(err) {
+            document.getElementById('app').innerHTML =
+                '<div style="color:red;padding:20px">' + err.message + '</div>';
+            console.error(err);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outconceive IDE</title>
+    <link rel="stylesheet" href="css/outconceive.css">
+    <link rel="stylesheet" href="css/outconceive-ide.css">
+</head>
+<body>
+    <div id="ide"></div>
+
+    <script src="js/dom-patcher.js"></script>
+    <script src="js/event-router.js"></script>
+    <script src="js/ide.js"></script>
+    <script type="module">
+        import init, { OutconceiveApp } from './pkg/outconceive.js';
+
+        async function main() {
+            await init();
+
+            var app = new OutconceiveApp();
+            var root = document.getElementById('ide');
+
+            // Start with a simple template
+            app.from_markout([
+                '@card padding:24',
+                '| My App',
+                '| {input:name}',
+                '| {button:greet "Say Hello" primary}',
+                '| {label:message}',
+                '@end card',
+            ].join('\n'));
+
+            // Initial render
+            var vdom = app.initial_render();
+
+            // Build IDE
+            var ide = new OutconceiveIDE(root, app, null);
+            ide.build();
+
+            // Create patcher targeting the canvas
+            var canvas = document.getElementById('ide-canvas');
+            var patcher = new DomPatcher(canvas);
+            patcher.renderInitial(vdom);
+            ide.patcher = patcher;
+
+            // Register action handlers for preview mode
+            ide.on('greet', function(app) {
+                var name = app.get_state('name') || 'World';
+                var patches = app.update_state('message', 'Hello, ' + name + '!');
+                patcher.applyPatches(patches);
+            });
+
+            ide._updateStatus();
+        }
+
+        main().catch(function(err) {
+            document.getElementById('ide').innerHTML =
+                '<div style="color:red;padding:20px">Failed to load: ' + err.message + '</div>';
+            console.error(err);
+        });
+    </script>
+</body>
+</html>

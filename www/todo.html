@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outconceive — Todo App</title>
+    <link rel="stylesheet" href="css/outconceive.css">
+    <style>
+        body { background: #f0eeea; padding: 32px; }
+        .mc-app { max-width: 500px; }
+        [data-scope] .mc-checkbox { margin-right: 8px; }
+        [data-scope] .mc-label { flex: 1; }
+        [data-scope] .mc-button { flex: 0; }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script src="js/dom-patcher.js"></script>
+    <script src="js/event-router.js"></script>
+    <script src="js/outconceive.js"></script>
+    <script type="module">
+        import init, { OutconceiveApp } from './pkg/outconceive.js';
+
+        async function main() {
+            await init();
+
+            var app = new Outconceive(new OutconceiveApp());
+
+            app.from_markout([
+                '@card padding:24',
+                '| Todo List',
+                '| {input:new_todo col-9}  {button:add "Add" primary col-3}',
+                '@end card',
+                '',
+                '@card padding:16',
+                '@each todos',
+                '| {checkbox:done}  {label:text}  {button:remove "X" danger}',
+                '@end each',
+                '@end card',
+                '',
+                '| {label:summary}',
+            ].join('\n'));
+
+            // Seed some items
+            app.app.add_list_item('todos', JSON.stringify({ text: 'Buy milk', done: false }));
+            app.app.add_list_item('todos', JSON.stringify({ text: 'Write code', done: true }));
+            app.app.add_list_item('todos', JSON.stringify({ text: 'Ship Outconceive', done: false }));
+
+            app.mount('app');
+            updateSummary();
+
+            // Add todo
+            app.on('add', function(wasmApp) {
+                var text = wasmApp.get_state('new_todo');
+                if (!text) return;
+                var patches = wasmApp.add_list_item('todos', JSON.stringify({ text: text, done: false }));
+                app.patcher.applyPatches(patches);
+                var patches2 = wasmApp.update_state('new_todo', '');
+                app.patcher.applyPatches(patches2);
+                updateSummary();
+            });
+
+            function updateSummary() {
+                var count = app.app.get_list_count('todos');
+                var done = 0;
+                for (var i = 0; i < count; i++) {
+                    if (app.app.get_state_bool('todos.' + i + '.done')) done++;
+                }
+                var patches = app.app.update_state('summary', done + '/' + count + ' completed');
+                app.patcher.applyPatches(patches);
+            }
+        }
+
+        main().catch(function(err) {
+            document.getElementById('app').innerHTML =
+                '<div style="color:red;padding:20px">' + err.message + '</div>';
+            console.error(err);
+        });
+    </script>
+</body>
+</html>
