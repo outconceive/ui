@@ -94,6 +94,7 @@ pub struct ComponentSpan {
     pub responsive: Option<Vec<(String, u8, u8)>>,
     pub animate: Option<String>,
     pub popover: Option<String>,
+    pub constraints: Option<Vec<String>>,
 }
 
 pub fn parse_col(s: &str) -> Option<(u8, u8)> {
@@ -183,6 +184,7 @@ pub fn group_spans(
             responsive: None,
             animate: None,
             popover: None,
+            constraints: None,
         });
     }
 

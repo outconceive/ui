@@ -252,6 +252,7 @@ fn parse_content_line(input: &str) -> Line {
     let mut responsives: Option<std::collections::HashMap<usize, Vec<(String, u8, u8)>>> = None;
     let mut animates: Option<std::collections::HashMap<usize, String>> = None;
     let mut popovers: Option<std::collections::HashMap<usize, String>> = None;
+    let mut line_constraints: Option<std::collections::HashMap<usize, Vec<String>>> = None;
 
     for (ti, token) in tokens.iter().enumerate() {
         match token {
@@ -273,7 +274,7 @@ fn parse_content_line(input: &str) -> Line {
                     }
                 }
             }
-            Token::Component { kind, binding, label, style, href, col, validate, responsive, animate, popover } => {
+            Token::Component { kind, binding, label, style, href, col, validate, responsive, animate, popover, constraints: comp_constraints } => {
                 let (comp_char, computed_width) = component_char_and_width(
                     kind,
                     binding.as_deref(),
@@ -335,6 +336,11 @@ fn parse_content_line(input: &str) -> Line {
                     popovers.get_or_insert_with(std::collections::HashMap::new)
                         .insert(pos, p.clone());
                 }
+
+                if let Some(ref cc) = comp_constraints {
+                    line_constraints.get_or_insert_with(std::collections::HashMap::new)
+                        .insert(pos, cc.clone());
+                }
             }
             Token::Spacing(n) => {
                 content.extend(std::iter::repeat(' ').take(*n));
@@ -352,6 +358,7 @@ fn parse_content_line(input: &str) -> Line {
     line.responsives = responsives;
     line.animates = animates;
     line.popovers = popovers;
+    line.constraints = line_constraints;
     line
 }
 
@@ -369,6 +376,7 @@ enum Token {
         responsive: Option<Vec<(String, u8, u8)>>,
         animate: Option<String>,
         popover: Option<String>,
+        constraints: Option<Vec<String>>,
     },
     Spacing(usize),
 }
@@ -455,6 +463,7 @@ fn parse_component_spec(spec: &str) -> Option<Token> {
     let mut responsive_cols: Vec<(String, u8, u8)> = Vec::new();
     let mut animate = None;
     let mut popover = None;
+    let mut constraints: Vec<String> = Vec::new();
 
     for part in &parts[1..] {
         if part.starts_with('"') && part.ends_with('"') && part.len() >= 2 {
@@ -471,6 +480,8 @@ fn parse_component_spec(spec: &str) -> Option<Token> {
             animate = Some(part[8..].to_string());
         } else if part.starts_with("popover:") {
             popover = Some(part[8..].trim_matches('"').to_string());
+        } else if crate::constraint::is_constraint_token(part) {
+            constraints.push(part.clone());
         } else if part.starts_with("col-") || part.starts_with("sm:") || part.starts_with("md:") || part.starts_with("lg:") || part.starts_with("xl:") {
             if let Some(bp_col) = parse_responsive_col(part) {
                 responsive_cols.push(bp_col);
@@ -497,6 +508,7 @@ fn parse_component_spec(spec: &str) -> Option<Token> {
         responsive: resp,
         animate,
         popover,
+        constraints: if constraints.is_empty() { None } else { Some(constraints) },
     })
 }
 
@@ -743,6 +755,12 @@ fn span_to_markout(
             } else {
                 parts.push(format!("{}:col-{}[{}]", bp, n, total));
             }
+        }
+    }
+
+    if let Some(ref cc) = span.constraints {
+        for c in cc {
+            parts.push(c.clone());
         }
     }
 

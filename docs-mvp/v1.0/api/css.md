@@ -88,6 +88,13 @@ Breakpoints: `sm` 576px, `md` 768px, `lg` 992px, `xl` 1200px.
 | `.mc-valid` | Green border |
 | `.mc-error` | Error message text |
 
+## Parametric
+
+| Class | Description |
+|-------|-------------|
+| `.mc-parametric` | Constraint-based layout container (`position: relative`) |
+| `[data-parametric]` | Solved element wrapper (`position: absolute`) |
+
 ## Editor
 
 | Class | Description |
@@ -133,3 +140,4 @@ See [Theming](/v1.0/guide/theming) for the full list of `--mc-*` CSS variables.
 | `data-theme` | JS API | Active theme name |
 | `data-editor` | Renderer | Editor container marker |
 | `data-features` | Renderer | Comma-separated editor features |
+| `data-parametric` | Renderer | Parametric element name |

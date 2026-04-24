@@ -125,6 +125,10 @@ body {
 .mc-columns { column-fill: auto; }
 .mc-columns > .mc-row { break-inside: avoid; }
 
+.mc-parametric { position: relative; }
+.mc-parametric > [data-parametric] { position: absolute; display: flex; align-items: center; }
+.mc-parametric > [data-parametric] > * { width: 100%; }
+
 .mc-modal {
     background: var(--mc-card-bg);
     border-radius: 12px;

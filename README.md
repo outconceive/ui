@@ -34,7 +34,9 @@ That's a validated login form with computed display name, dark theme, persistent
 
 **17 components** — input, password, button, checkbox, radio, select, textarea, label, link, image, divider, spacer, pill, badge, progress bar, sparkline, custom
 
-**10 containers** — `@card`, `@form`, `@section`, `@nav`, `@header`, `@footer`, `@main`, `@aside`, `@columns`, `@editor`
+**11 containers** — `@card`, `@form`, `@section`, `@nav`, `@header`, `@footer`, `@main`, `@aside`, `@columns`, `@editor`, `@parametric`
+
+**Parametric layout** — `@parametric` container where components position themselves via named constraints (`center-x:title`, `gap-y:1rem:search`, `left:start right:end`). Rust solver computes absolute positions from a dependency graph — no runtime DOM measurement
 
 **Rich text editor** — `@editor bold italic code heading list` embeds a WASM-powered editor with opt-in features. The feature list is a contract: undeclared formatting is stripped from pasted content
 

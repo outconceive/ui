@@ -43,6 +43,7 @@ export default defineConfig({
           text: 'Advanced',
           items: [
             { text: 'Templates & Slots', link: '/v1.0/guide/templates' },
+            { text: 'Parametric Layout', link: '/v1.0/guide/parametric' },
             { text: 'Multi-Mount', link: '/v1.0/guide/multi-mount' },
             { text: 'SSR & Hydration', link: '/v1.0/guide/ssr' },
             { text: 'Visual IDE', link: '/v1.0/guide/ide' },

@@ -79,6 +79,7 @@ pub struct Line {
     pub responsives: Option<HashMap<usize, Vec<(String, u8, u8)>>>,
     pub animates: Option<HashMap<usize, String>>,
     pub popovers: Option<HashMap<usize, String>>,
+    pub constraints: Option<HashMap<usize, Vec<String>>>,
 }
 
 impl Line {
@@ -95,6 +96,7 @@ impl Line {
             responsives: None,
             animates: None,
             popovers: None,
+            constraints: None,
         }
     }
 
@@ -117,6 +119,7 @@ impl Line {
             responsives: None,
             animates: None,
             popovers: None,
+            constraints: None,
         }
     }
 
@@ -134,6 +137,7 @@ impl Line {
             responsives: None,
             animates: None,
             popovers: None,
+            constraints: None,
         }
     }
 
@@ -150,6 +154,7 @@ impl Line {
             responsives: None,
             animates: None,
             popovers: None,
+            constraints: None,
         }
     }
 
@@ -166,6 +171,7 @@ impl Line {
             responsives: None,
             animates: None,
             popovers: None,
+            constraints: None,
         }
     }
 
@@ -182,6 +188,7 @@ impl Line {
             responsives: None,
             animates: None,
             popovers: None,
+            constraints: None,
         }
     }
 
@@ -206,6 +213,7 @@ impl Line {
             responsives: None,
             animates: None,
             popovers: None,
+            constraints: None,
         }
     }
 
@@ -261,6 +269,13 @@ impl Line {
             for span in &mut spans {
                 if let Some(p) = popovers.get(&span.start) {
                     span.popover = Some(p.clone());
+                }
+            }
+        }
+        if let Some(ref constraints) = self.constraints {
+            for span in &mut spans {
+                if let Some(c) = constraints.get(&span.start) {
+                    span.constraints = Some(c.clone());
                 }
             }
         }

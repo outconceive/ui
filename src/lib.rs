@@ -1,8 +1,10 @@
 pub mod block;
 pub mod component;
+pub mod constraint;
 pub mod document;
 pub mod line;
 pub mod markout;
+pub mod parametric;
 pub mod state;
 pub mod style;
 pub mod vdom;

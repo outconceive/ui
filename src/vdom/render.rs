@@ -5,11 +5,13 @@ use crate::style;
 use crate::block;
 use crate::line::Line;
 use crate::state::StateStore;
+use crate::parametric;
 
 pub fn render_document(lines: &[Line], state: &StateStore) -> VNode {
     let mut root_children = Vec::new();
     let mut container_stack: Vec<(String, HashMap<String, String>, Vec<VNode>)> = Vec::new();
     let mut each_stack: Vec<(String, Vec<Line>)> = Vec::new();
+    let mut parametric_stack: Vec<(HashMap<String, String>, Vec<Line>)> = Vec::new();
     let mut line_counter = 0usize;
 
     for (raw_index, line) in lines.iter().enumerate() {
@@ -39,6 +41,56 @@ pub fn render_document(lines: &[Line], state: &StateStore) -> VNode {
             continue;
         }
 
+        // Collecting lines inside @parametric
+        if !parametric_stack.is_empty() {
+            if line.is_container_end() {
+                if let Some(tag) = &line.meta.tag {
+                    if tag == "parametric" {
+                        let (attrs, collected_lines) = parametric_stack.pop().unwrap();
+                        let layout = parametric::solve_layout(&collected_lines);
+
+                        let container_style = format!(
+                            "position:relative;width:{:.1}px;height:{:.1}px",
+                            layout.container_width, layout.container_height
+                        );
+                        let mut container_attrs = attrs;
+                        container_attrs.insert("style".to_string(), container_style);
+
+                        let mut children = Vec::new();
+                        for (el_name, rect) in &layout.elements {
+                            let span_line = collected_lines.iter()
+                                .find(|l| l.spans().iter().any(|s| s.state_key.as_deref() == Some(el_name) || format!("_anon_{}", 0) == *el_name));
+
+                            if let Some(sl) = span_line {
+                                let spans = sl.spans();
+                                if let Some(span) = spans.iter().find(|s| s.state_key.as_deref() == Some(el_name.as_str())) {
+                                    let mut wrapper_attrs = HashMap::new();
+                                    wrapper_attrs.insert("style".to_string(), format!(
+                                        "position:absolute;left:{:.1}px;top:{:.1}px;width:{:.1}px;height:{:.1}px",
+                                        rect.x, rect.y, rect.width, rect.height
+                                    ));
+                                    wrapper_attrs.insert("data-parametric".to_string(), el_name.clone());
+
+                                    let inner = render_span(span, state);
+                                    children.push(VNode::element_with_attrs("div", wrapper_attrs, vec![inner]));
+                                }
+                            }
+                        }
+
+                        let container = VNode::element_with_attrs("div", container_attrs, children);
+                        if let Some(parent) = container_stack.last_mut() {
+                            parent.2.push(container);
+                        } else {
+                            root_children.push(container);
+                        }
+                        continue;
+                    }
+                }
+            }
+            parametric_stack.last_mut().unwrap().1.push(line.clone());
+            continue;
+        }
+
         if line.is_each_start() {
             let key = line.meta.tag.as_deref().unwrap_or("").to_string();
             each_stack.push((key, Vec::new()));
@@ -49,6 +101,19 @@ pub fn render_document(lines: &[Line], state: &StateStore) -> VNode {
             let tag = line.meta.tag.as_deref().unwrap_or("div");
             let mut attrs = HashMap::new();
             attrs.insert("class".to_string(), format!("mc-{}", tag));
+
+            if tag == "parametric" {
+                let mut attrs = HashMap::new();
+                attrs.insert("class".to_string(), "mc-parametric".to_string());
+                if let Some(config) = &line.meta.config {
+                    let style = config_to_style(config);
+                    if !style.is_empty() {
+                        attrs.insert("data-config".to_string(), config.clone());
+                    }
+                }
+                parametric_stack.push((attrs, Vec::new()));
+                continue;
+            }
 
             if tag == "editor" {
                 if let Some(config) = &line.meta.config {

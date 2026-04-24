@@ -175,6 +175,73 @@ Add to any component for a hover tooltip:
 {button:info "Help" popover:"Detailed help text"}
 ```
 
+## Parametric Layout
+
+`@parametric` is a constraint-based layout container. Components position themselves relative to each other by name instead of grid columns.
+
+```
+@parametric
+| {label:title "Dashboard"}
+| {input:search center-x:title gap-y:16}
+| {button:go "Search" primary right:search gap-x:8 center-y:search}
+| {divider:line left:title right:go gap-y:24:go}
+@end parametric
+```
+
+Each component's binding name (e.g., `search`) becomes its identity for constraint references.
+
+### Edge Alignment
+
+| Constraint | Meaning |
+|-----------|---------|
+| `left:ref` | My left edge = ref's left edge |
+| `right:ref` | My right edge = ref's right edge |
+| `top:ref` | My top edge = ref's top edge |
+| `bottom:ref` | My bottom edge = ref's bottom edge |
+
+When both `left:` and `right:` are set, the element stretches between them.
+
+### Center Alignment
+
+| Constraint | Meaning |
+|-----------|---------|
+| `center-x:ref` | My horizontal center = ref's horizontal center |
+| `center-y:ref` | My vertical center = ref's vertical center |
+
+### Spacing (Gap)
+
+| Constraint | Meaning |
+|-----------|---------|
+| `gap-x:N:ref` | N units to the right of ref |
+| `gap-y:N:ref` | N units below ref |
+| `gap-x:N` | N units right of the nearest referenced element |
+| `gap-y:N` | N units below the nearest referenced element |
+
+Supports `px` (default), `rem`, `em`, and `%`:
+
+```
+| {image:b center-y:a gap-x:1rem:a}
+| {label:c left:a gap-y:2em:b}
+```
+
+### Sizing
+
+| Constraint | Meaning |
+|-----------|---------|
+| `width:ref` | My width = ref's width |
+| `height:ref` | My height = ref's height |
+
+### Distribution
+
+| Constraint | Meaning |
+|-----------|---------|
+| `distribute-x:a:b` | Center horizontally between a and b |
+| `distribute-y:a:b` | Center vertically between a and b |
+
+### How It Works
+
+The first element with no constraints anchors at (0, 0). The Rust solver builds a dependency graph, topologically sorts it, and computes absolute positions for each element. The container auto-sizes to the bounding box of all elements. No runtime DOM measurement — everything is computed in WASM.
+
 ## Special Directives
 
 | Directive | Description |
@@ -182,3 +249,4 @@ Add to any component for a hover tooltip:
 | `@each key` / `@end each` | Repeat template for each list item |
 | `@define name` / `@end define` | Define reusable template |
 | `@use name scope=prefix` | Instantiate template with scoped state |
+| `@parametric` / `@end parametric` | Constraint-based layout container |

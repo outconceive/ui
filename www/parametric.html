@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outconceive UI — Parametric Layout</title>
+    <link rel="stylesheet" href="css/outconceive.css">
+    <style>
+        .demo-header { text-align: center; margin-bottom: 32px; }
+        .demo-header h1 { font-size: 28px; color: #333; margin-bottom: 4px; }
+        .demo-header p { color: #888; font-size: 14px; }
+        #app { min-height: 100px; }
+        .mc-parametric { border-radius: 8px; padding: 16px; margin: 16px 0; }
+    </style>
+</head>
+<body>
+    <div class="mc-app">
+        <div class="demo-header">
+            <h1>@parametric</h1>
+            <p>Constraint-based layout — components position themselves relative to each other</p>
+        </div>
+        <div id="app1"></div>
+        <hr style="margin: 40px 0;">
+        <div id="app2"></div>
+    </div>
+
+    <script src="js/dom-patcher.js"></script>
+    <script src="js/event-router.js"></script>
+    <script src="js/router.js"></script>
+    <script src="js/bus.js"></script>
+    <script src="js/outconceive.js"></script>
+    <script type="module">
+        import init, { OutconceiveApp } from './pkg/outconceive.js';
+        await init();
+
+        // Demo 1: Dashboard header with centered search
+        const app1 = new Outconceive(new OutconceiveApp());
+        app1.from_markout(`
+@parametric
+| {label:title "Dashboard"}
+| {input:search center-x:title gap-y:16}
+| {button:go "Search" primary right:search gap-x:8 center-y:search}
+| {divider:line left:title right:go gap-y:24:go}
+@end parametric
+        `);
+        app1.mount('#app1');
+        app1.on('go', function() { alert('Searching: ' + app1.get('search')); });
+
+        // Demo 2: Aligned form fields
+        const app2 = new Outconceive(new OutconceiveApp());
+        app2.from_markout(`
+@parametric
+| {label:lbl_name "Name"}
+| {input:name left:lbl_name gap-y:4:lbl_name}
+| {label:lbl_email "Email" left:lbl_name gap-y:16:name}
+| {input:email left:lbl_email gap-y:4:lbl_email width:name}
+| {button:submit "Submit" primary left:email gap-y:16:email}
+@end parametric
+        `);
+        app2.mount('#app2');
+        app2.on('submit', function() {
+            alert('Name: ' + app2.get('name') + '\nEmail: ' + app2.get('email'));
+        });
+        // Demo 3: SVGs with center-y and rem gap
+        const heading3 = document.createElement('h3');
+        heading3.style.cssText = 'text-align:center;color:#888;margin:32px 0 8px';
+        heading3.textContent = 'SVG alignment with rem units';
+        document.querySelector('.mc-app').appendChild(heading3);
+
+        const app3El = document.createElement('div');
+        app3El.id = 'app3';
+        document.querySelector('.mc-app').appendChild(app3El);
+
+        // Create inline SVGs
+        const svg1 = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80" viewBox="0 0 120 80"><rect width="120" height="80" rx="8" fill="#3b82f6"/><path d="M10,60 L30,25 L50,45 L70,15 L90,35 L110,20" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="30" cy="25" r="3" fill="#fff"/><circle cx="70" cy="15" r="3" fill="#fff"/><circle cx="110" cy="20" r="3" fill="#fff"/></svg>`)}`;
+
+        const svg2 = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" rx="8" fill="#ef4444"/><circle cx="40" cy="60" r="25" fill="none" stroke="#fff" stroke-width="2.5"/><path d="M70,35 L70,85 M70,35 L95,55 M70,60 L90,75" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`)}`;
+
+        const app3 = new Outconceive(new OutconceiveApp());
+        app3.from_markout(`
+@parametric
+| {image:chart1 href=${svg1}}
+| {image:chart2 href=${svg2} center-y:chart1 gap-x:1rem:chart1}
+| {label:caption "Vertically centered, 1rem apart" left:chart1 gap-y:8:chart2}
+@end parametric
+        `);
+        app3.mount('#app3');
+    </script>
+</body>
+</html>
