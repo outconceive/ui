@@ -3,6 +3,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'Outconceive UI',
   description: 'The parallel strings web framework — no trees, no reconciliation',
+  base: '/ui/',
   ignoreDeadLinks: true,
 
   themeConfig: {
@@ -73,7 +74,7 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/outconceive-ui/outconceive' }
+      { icon: 'github', link: 'https://github.com/outconceive/ui' }
     ],
 
     footer: {
