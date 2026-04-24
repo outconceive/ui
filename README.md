@@ -34,7 +34,9 @@ That's a validated login form with computed display name, dark theme, persistent
 
 **17 components** — input, password, button, checkbox, radio, select, textarea, label, link, image, divider, spacer, pill, badge, progress bar, sparkline, custom
 
-**9 containers** — `@card`, `@form`, `@section`, `@nav`, `@header`, `@footer`, `@main`, `@aside`, `@columns`
+**10 containers** — `@card`, `@form`, `@section`, `@nav`, `@header`, `@footer`, `@main`, `@aside`, `@columns`, `@editor`
+
+**Rich text editor** — `@editor bold italic code heading list` embeds a WASM-powered editor with opt-in features. The feature list is a contract: undeclared formatting is stripped from pasted content
 
 **Reactive state** — `set()` / `get()` / `computed()` / `effect()` / `memo()` with automatic dirty tracking and incremental re-render
 
