@@ -4,6 +4,7 @@ Cargo.lock
 
 # WASM build output
 www/pkg/
+www/wasm/
 
 # Node
 node_modules/

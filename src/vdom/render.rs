@@ -49,20 +49,36 @@ pub fn render_document(lines: &[Line], state: &StateStore) -> VNode {
             let tag = line.meta.tag.as_deref().unwrap_or("div");
             let mut attrs = HashMap::new();
             attrs.insert("class".to_string(), format!("mc-{}", tag));
-            if let Some(config) = &line.meta.config {
-                attrs.insert("data-config".to_string(), config.clone());
-                let style = config_to_style(config);
-                if !style.is_empty() {
-                    attrs.insert("style".to_string(), style);
+
+            if tag == "editor" {
+                if let Some(config) = &line.meta.config {
+                    let (features, bind_key) = parse_editor_config(config);
+                    if !features.is_empty() {
+                        attrs.insert("data-features".to_string(), features.join(","));
+                    }
+                    if let Some(key) = bind_key {
+                        attrs.insert("data-bind".to_string(), key);
+                    }
+                }
+                attrs.insert("data-editor".to_string(), "true".to_string());
+            } else {
+                if let Some(config) = &line.meta.config {
+                    attrs.insert("data-config".to_string(), config.clone());
+                    let style = config_to_style(config);
+                    if !style.is_empty() {
+                        attrs.insert("style".to_string(), style);
+                    }
                 }
             }
+
             container_stack.push((tag.to_string(), attrs, Vec::new()));
             continue;
         }
 
         if line.is_container_end() {
             if let Some((tag, attrs, children)) = container_stack.pop() {
-                let container = VNode::element_with_attrs(&tag_for_container(&tag), attrs, children);
+                let inner = if tag == "editor" { Vec::new() } else { children };
+                let container = VNode::element_with_attrs(&tag_for_container(&tag), attrs, inner);
                 if let Some(parent) = container_stack.last_mut() {
                     parent.2.push(container);
                 } else {
@@ -463,6 +479,26 @@ fn spacer_style(mode: &str) -> String {
     "flex:1".to_string()
 }
 
+fn parse_editor_config(config: &str) -> (Vec<String>, Option<String>) {
+    let valid_features = [
+        "bold", "italic", "underline", "strikethrough", "code",
+        "heading", "list", "ordered-list", "quote", "code-block",
+        "link", "image", "divider", "hr",
+    ];
+    let mut features = Vec::new();
+    let mut bind_key = None;
+
+    for token in config.split_whitespace() {
+        if let Some(key) = token.strip_prefix("bind:") {
+            bind_key = Some(key.to_string());
+        } else if valid_features.contains(&token) {
+            features.push(token.to_string());
+        }
+    }
+
+    (features, bind_key)
+}
+
 fn tag_for_container(tag_name: &str) -> String {
     match tag_name {
         "nav" => "nav".to_string(),
@@ -810,6 +846,40 @@ mod tests {
         assert!(style.contains("padding:16px"));
         assert!(style.contains("max-width:800px"));
         assert!(style.contains("width:50%"));
+    }
+
+    #[test]
+    fn test_render_editor_container() {
+        let lines = vec![
+            Line::container_start("editor", Some("bold italic code bind:content")),
+            Line::label("This should be discarded"),
+            Line::container_end("editor"),
+        ];
+        let state = StateStore::new();
+        let vdom = render_document(&lines, &state);
+
+        let container = &vdom.children()[0];
+        match container {
+            VNode::Element(el) => {
+                assert!(el.attrs.get("class").unwrap().contains("mc-editor"));
+                assert_eq!(el.attrs.get("data-editor").unwrap(), "true");
+                assert_eq!(el.attrs.get("data-features").unwrap(), "bold,italic,code");
+                assert_eq!(el.attrs.get("data-bind").unwrap(), "content");
+                assert_eq!(el.children.len(), 0, "editor container should be opaque");
+            }
+            _ => panic!("expected element"),
+        }
+    }
+
+    #[test]
+    fn test_parse_editor_config() {
+        let (features, bind) = parse_editor_config("bold italic heading bind:notes");
+        assert_eq!(features, vec!["bold", "italic", "heading"]);
+        assert_eq!(bind, Some("notes".to_string()));
+
+        let (features2, bind2) = parse_editor_config("code quote");
+        assert_eq!(features2, vec!["code", "quote"]);
+        assert_eq!(bind2, None);
     }
 
     #[test]

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outconceive UI — Editor</title>
+    <link rel="stylesheet" href="css/outconceive.css">
+    <link rel="stylesheet" href="css/outconceive-editor.css">
+    <style>
+        .demo-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .demo-header h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .demo-header p {
+            color: #888;
+            font-size: 14px;
+        }
+        #app { min-height: 100px; }
+        .debug-panel {
+            margin-top: 24px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="mc-app">
+        <div class="demo-header">
+            <h1>@editor</h1>
+            <p>Rich text editor with opt-in features</p>
+        </div>
+        <div id="app"></div>
+        <div id="output" class="debug-panel">Editor content will appear here...</div>
+    </div>
+
+    <script src="js/dom-patcher.js"></script>
+    <script src="js/event-router.js"></script>
+    <script src="js/router.js"></script>
+    <script src="js/bus.js"></script>
+    <script src="js/outconceive.js"></script>
+    <script type="module">
+        import { EditorBridge } from './js/editor-bridge.js';
+        window.EditorBridge = EditorBridge;
+
+        import init, { OutconceiveApp } from './pkg/outconceive.js';
+        await init();
+
+        const wasmApp = new OutconceiveApp();
+        const app = new Outconceive(wasmApp);
+
+        app.from_markout(`
+@card padding:16
+| Notes
+@editor bold italic underline code heading list quote bind:content
+@end editor
+| {button:show "Show Markdown" primary}  {spacer:end}  {button:clear "Clear" danger}
+@end card
+        `);
+
+        app.mount('#app');
+
+        app.on('show', function() {
+            var editor = app.getEditor('content');
+            if (editor) {
+                document.getElementById('output').textContent = editor.getContent();
+            }
+        });
+
+        app.on('clear', function() {
+            var editor = app.getEditor('content');
+            if (editor) {
+                editor.setContent('');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -77,6 +77,9 @@ Outconceive.prototype.mount = function(target) {
     // Wrap event router to run computed after input events
     this._wrapEventRouter();
 
+    // Initialize editor containers
+    this._initEditors();
+
     // Initial computed pass
     this._runComputed();
 
@@ -122,6 +125,7 @@ Outconceive.prototype.hydrate = function(target) {
 };
 
 Outconceive.prototype.unmount = function() {
+    this._destroyEditors();
     if (this.container) {
         this.container.innerHTML = '';
     }
@@ -644,5 +648,34 @@ function arraysEqual(a, b) {
     }
     return true;
 }
+
+// === Editor Integration ===
+
+Outconceive.prototype._initEditors = function() {
+    if (!this.container || typeof EditorBridge === 'undefined') return;
+    this._editors = [];
+    var editorDivs = this.container.querySelectorAll('[data-editor="true"]');
+    for (var i = 0; i < editorDivs.length; i++) {
+        var bridge = new EditorBridge(editorDivs[i], this.app);
+        this._editors.push(bridge);
+    }
+};
+
+Outconceive.prototype._destroyEditors = function() {
+    if (this._editors) {
+        for (var i = 0; i < this._editors.length; i++) {
+            this._editors[i].destroy();
+        }
+        this._editors = [];
+    }
+};
+
+Outconceive.prototype.getEditor = function(bindKey) {
+    if (!this._editors) return null;
+    for (var i = 0; i < this._editors.length; i++) {
+        if (this._editors[i].bindKey === bindKey) return this._editors[i];
+    }
+    return null;
+};
 
 window.Outconceive = Outconceive;
