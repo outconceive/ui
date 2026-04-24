@@ -126,6 +126,29 @@ Re-triggers a CSS animation on the element bound to `stateKey`.
 | `app.subscribe(event, fn)` | Listen for bus events. `fn(data, self)` |
 | `app.syncState(key, bus)` | Two-way state sync with bus |
 
+## Editor
+
+```javascript
+var editor = app.getEditor(bindKey)
+```
+
+Returns the `EditorBridge` instance for the `@editor` bound to the given state key, or `null` if not found.
+
+| Method | Description |
+|--------|-------------|
+| `editor.getContent()` | Get editor content as markdown |
+| `editor.setContent(md)` | Set editor content from markdown |
+| `editor.destroy()` | Remove editor and free WASM memory |
+
+The editor module (`editor-bridge.js`) is an ES module — import it before mounting:
+
+```javascript
+import { EditorBridge } from './js/editor-bridge.js';
+window.EditorBridge = EditorBridge;
+```
+
+Pages without `@editor` containers don't need to load it.
+
 ## Static Methods
 
 | Method | Description |

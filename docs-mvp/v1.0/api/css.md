@@ -88,6 +88,17 @@ Breakpoints: `sm` 576px, `md` 768px, `lg` 992px, `xl` 1200px.
 | `.mc-valid` | Green border |
 | `.mc-error` | Error message text |
 
+## Editor
+
+| Class | Description |
+|-------|-------------|
+| `.mc-editor` | Editor container |
+| `.mc-editor-active` | Editor initialized |
+| `.mc-editor-toolbar` | Toolbar row |
+| `.mc-editor-btn` | Toolbar button |
+| `.mc-editor-btn-active` | Active format state |
+| `.mc-editor-content` | Contenteditable area |
+
 ## Routing
 
 | Class | Description |
@@ -120,3 +131,5 @@ See [Theming](/v1.0/guide/theming) for the full list of `--mc-*` CSS variables.
 | `data-popover` | Renderer | Popover tooltip text |
 | `data-value` | Renderer | Progress bar percentage |
 | `data-theme` | JS API | Active theme name |
+| `data-editor` | Renderer | Editor container marker |
+| `data-features` | Renderer | Comma-separated editor features |

@@ -66,6 +66,33 @@ Lines starting with `|` define UI rows:
 | `@main` | `<main>` |
 | `@aside` | `<aside>` |
 | `@columns` | `<div>` with CSS columns |
+| `@editor` | Rich text editor (WASM-powered) |
+
+## Editor
+
+```
+@editor feature1 feature2 ... bind:stateKey
+@end editor
+```
+
+Features are opt-in. Only declared features are available in the toolbar, keyboard shortcuts, and content. Undeclared formatting is stripped from pasted text.
+
+| Feature | Toolbar | Shortcut |
+|---------|---------|----------|
+| `bold` | **B** | Ctrl+B |
+| `italic` | *I* | Ctrl+I |
+| `underline` | U | Ctrl+U |
+| `strikethrough` | S | — |
+| `code` | `<>` | Ctrl+` |
+| `heading` | H | — |
+| `list` | • | — |
+| `ordered-list` | 1. | — |
+| `quote` | " | — |
+| `code-block` | {} | — |
+| `link` | 🔗 | Ctrl+K |
+| `hr` | — | — |
+
+`bind:key` syncs the editor's markdown content to an Outconceive state key.
 
 ## Container Config
 

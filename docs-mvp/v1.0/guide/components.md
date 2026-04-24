@@ -189,6 +189,57 @@ A tooltip that appears on hover. Add `popover:` to any component:
 
 Pure CSS — no JavaScript needed. Works on buttons, labels, pills, inputs, or any component.
 
+## Editor
+
+A rich text editor powered by a separate Rust/WASM engine. Features are opt-in — only the formatting you declare is available:
+
+```
+@editor bold italic code heading list bind:content
+@end editor
+```
+
+A minimal notes field:
+
+```
+@editor bold italic bind:notes
+@end editor
+```
+
+A full-featured editor:
+
+```
+@editor bold italic underline strikethrough code heading list ordered-list quote code-block link hr bind:article
+@end editor
+```
+
+Available features:
+
+| Feature | Description |
+|---------|-------------|
+| `bold` | Bold text (Ctrl+B) |
+| `italic` | Italic text (Ctrl+I) |
+| `underline` | Underlined text (Ctrl+U) |
+| `strikethrough` | Strikethrough text |
+| `code` | Inline code (Ctrl+`) |
+| `heading` | Heading levels |
+| `list` | Unordered list |
+| `ordered-list` | Ordered list |
+| `quote` | Block quote |
+| `code-block` | Fenced code block |
+| `link` | Hyperlinks (Ctrl+K) |
+| `hr` | Horizontal divider |
+
+The feature list is a contract — if `bold` isn't declared, pasted bold text is stripped. Content can never contain formatting the developer didn't opt into.
+
+Bind to state with `bind:key` to read/write the editor's markdown content:
+
+```javascript
+app.on('save', function() {
+    var editor = app.getEditor('content');
+    var markdown = editor.getContent();
+});
+```
+
 ## Component Attributes
 
 All components support these optional attributes:
